@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Assignment Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f1117;
+      --surface:   #1a1d27;
+      --border:    #2a2d3e;
+      --accent:    #6c63ff;
+      --accent2:   #a78bfa;
+      --success:   #22c55e;
+      --danger:    #ef4444;
+      --warn:      #f59e0b;
+      --text:      #e2e8f0;
+      --muted:     #64748b;
+      --radius:    10px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── NAV ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 32px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .logo {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--accent2);
+      letter-spacing: -0.5px;
+    }
+    .logo span { color: var(--accent); }
+    .nav-status {
+      font-size: 0.75rem;
+      color: var(--muted);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+
+    /* ── LAYOUT ── */
+    .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+    .page-header { margin-bottom: 32px; }
+    .page-header h1 { font-size: 1.8rem; font-weight: 700; }
+    .page-header p { color: var(--muted); margin-top: 6px; font-size: 0.9rem; }
+
+    /* ── TABS ── */
+    .tabs { display: flex; gap: 4px; margin-bottom: 28px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 4px; width: fit-content; }
+    .tab {
+      padding: 8px 20px; border-radius: 7px; border: none;
+      background: transparent; color: var(--muted);
+      font-size: 0.875rem; font-weight: 500; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab.active { background: var(--accent); color: #fff; }
+    .tab:hover:not(.active) { color: var(--text); }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card-title { font-size: 1rem; font-weight: 600; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+    .card-title .icon { font-size: 1.1rem; }
+
+    /* ── FORM ── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-size: 0.8rem; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    input, select, textarea {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 7px; padding: 10px 14px;
+      color: var(--text); font-size: 0.9rem; font-family: inherit;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+    textarea { resize: vertical; min-height: 80px; }
+    select option { background: var(--surface); }
+
+    /* ── BUTTONS ── */
+    .btn {
+      padding: 10px 20px; border-radius: 7px; border: none;
+      font-size: 0.875rem; font-weight: 600; cursor: pointer;
+      transition: all 0.2s; font-family: inherit;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: #5a52e0; }
+    .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+    .btn-danger:hover { background: var(--danger); color: #fff; }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-success:hover { background: #16a34a; }
+    .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+    .btn-row { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+
+    /* ── TABLE ── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    th { text-align: left; padding: 10px 14px; color: var(--muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+    td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(108, 99, 255, 0.04); }
+
+    /* ── BADGES ── */
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .badge-open    { background: rgba(108,99,255,0.15); color: var(--accent2); }
+    .badge-submitted { background: rgba(245,158,11,0.15); color: var(--warn); }
+    .badge-graded  { background: rgba(34,197,94,0.15);  color: var(--success); }
+    .badge-late    { background: rgba(239,68,68,0.15);  color: var(--danger); }
+
+    /* ── STATS ── */
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .stat-card .num { font-size: 2rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    .stat-card .lbl { font-size: 0.78rem; color: var(--muted); font-weight: 500; }
+    .stat-card.accent .num  { color: var(--accent2); }
+    .stat-card.success .num { color: var(--success); }
+    .stat-card.warn .num    { color: var(--warn); }
+    .stat-card.danger .num  { color: var(--danger); }
+
+    /* ── EMPTY STATE ── */
+    .empty { text-align: center; padding: 48px 24px; color: var(--muted); }
+    .empty .empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .empty p { font-size: 0.9rem; }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed; bottom: 28px; right: 28px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 20px;
+      font-size: 0.875rem; font-weight: 500;
+      display: none; align-items: center; gap: 10px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4); z-index: 999;
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(20px); opacity:0; } to { transform:none; opacity:1; } }
+
+    /* ── SECTION VISIBILITY ── */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.6); z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 28px; width: 100%; max-width: 480px;
+    }
+    .modal h3 { margin-bottom: 18px; font-size: 1.05rem; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+    @media (max-width: 700px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: 1fr 1fr; }
+      nav { padding: 14px 16px; }
+      .container { padding: 20px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span>assign</span>track<span>.</span></div>
+  <div class="nav-status"><div class="dot"></div> Connected to AWS</div>
+</nav>
+
+<div class="container">
+  <div class="page-header">
+    <h1>Assignment Tracker</h1>
+    <p>Manage assignments, track submissions, and monitor progress — all in one place.</p>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat-card accent">
+      <div class="num" id="stat-total">0</div>
+      <div class="lbl">Total Assignments</div>
+    </div>
+    <div class="stat-card warn">
+      <div class="num" id="stat-open">0</div>
+      <div class="lbl">Open</div>
+    </div>
+    <div class="stat-card success">
+      <div class="num" id="stat-submitted">0</div>
+      <div class="lbl">Submitted</div>
+    </div>
+    <div class="stat-card danger">
+      <div class="num" id="stat-late">0</div>
+      <div class="lbl">Late / Overdue</div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('assignments')">📋 Assignments</button>
+    <button class="tab" onclick="switchTab('submit')">📤 Submit Work</button>
+    <button class="tab" onclick="switchTab('submissions')">📊 Submissions</button>
+  </div>
+
+  <!-- ── ASSIGNMENTS TAB ── -->
+  <div id="tab-assignments" class="section active">
+
+    <div class="card">
+      <div class="card-title"><span class="icon">➕</span> Create New Assignment</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Title</label>
+          <input type="text" id="a-title" placeholder="e.g. CI/CD Pipeline Lab"/>
+        </div>
+        <div class="form-group">
+          <label>Subject</label>
+          <input type="text" id="a-subject" placeholder="e.g. Cloud Computing"/>
+        </div>
+        <div class="form-group">
+          <label>Due Date</label>
+          <input type="date" id="a-due"/>
+        </div>
+        <div class="form-group">
+          <label>Max Marks</label>
+          <input type="number" id="a-marks" placeholder="100" min="1"/>
+        </div>
+        <div class="form-group full">
+          <label>Description</label>
+          <textarea id="a-desc" placeholder="Describe the assignment requirements..."></textarea>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="createAssignment()">Create Assignment</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">📋</span> All Assignments</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Subject</th>
+              <th>Due Date</th>
+              <th>Max Marks</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="assignments-table">
+            <tr><td colspan="6"><div class="empty"><div class="empty-icon">📭</div><p>No assignments yet. Create one above.</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SUBMIT TAB ── -->
+  <div id="tab-submit" class="section">
+    <div class="card">
+      <div class="card-title"><span class="icon">📤</span> Submit Assignment</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Student Name</label>
+          <input type="text" id="s-name" placeholder="Your full name"/>
+        </div>
+        <div class="form-group">
+          <label>Student ID</label>
+          <input type="text" id="s-id" placeholder="e.g. STU2024001"/>
+        </div>
+        <div class="form-group full">
+          <label>Select Assignment</label>
+          <select id="s-assignment">
+            <option value="">-- Choose an assignment --</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>Submission Notes / Work Summary</label>
+          <textarea id="s-notes" placeholder="Briefly describe your work or paste your submission link..."></textarea>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-success" onclick="submitAssignment()">Submit Assignment</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SUBMISSIONS TAB ── -->
+  <div id="tab-submissions" class="section">
+    <div class="card">
+      <div class="card-title"><span class="icon">📊</span> All Submissions</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Student ID</th>
+              <th>Assignment</th>
+              <th>Submitted At</th>
+              <th>Status</th>
+              <th>Marks</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="submissions-table">
+            <tr><td colspan="7"><div class="empty"><div class="empty-icon">📭</div><p>No submissions yet.</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GRADE MODAL -->
+<div class="modal-overlay" id="grade-modal">
+  <div class="modal">
+    <h3>Grade Submission</h3>
+    <div class="form-group" style="margin-bottom:14px;">
+      <label>Marks Awarded</label>
+      <input type="number" id="grade-marks" placeholder="e.g. 85" min="0"/>
+    </div>
+    <div class="form-group">
+      <label>Feedback (optional)</label>
+      <textarea id="grade-feedback" placeholder="Instructor feedback..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" style="background:var(--border);color:var(--text);" onclick="closeGradeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveGrade()">Save Grade</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+  const API = 'http://' + (window.BACKEND_URL || 'localhost') + ':5000';
+
+  let assignments  = [];
+  let submissions  = [];
+  let gradingSubId = null;
+
+  // ── TABS ──
+  function switchTab(name) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    event.target.classList.add('active');
+    if (name === 'submit') populateAssignmentDropdown();
+    if (name === 'submissions') loadSubmissions();
+  }
+
+  // ── TOAST ──
+  function toast(msg, color='var(--success)') {
+    const el = document.getElementById('toast');
+    el.innerHTML = `<span style="color:${color}">●</span> ${msg}`;
+    el.style.display = 'flex';
+    setTimeout(() => { el.style.display = 'none'; }, 3000);
+  }
+
+  // ── API HELPERS ──
+  async function api(path, method='GET', body=null) {
+    const opts = { method, headers: {'Content-Type':'application/json'} };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(API + path, opts);
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  }
+
+  // ── ASSIGNMENTS ──
+  async function loadAssignments() {
+    try {
+      assignments = await api('/assignments');
+      renderAssignments();
+      updateStats();
+    } catch(e) { toast('Could not load assignments: ' + e.message, 'var(--danger)'); }
+  }
+
+  function renderAssignments() {
+    const tbody = document.getElementById('assignments-table');
+    if (!assignments.length) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="empty-icon">📭</div><p>No assignments yet. Create one above.</p></div></td></tr>`;
+      return;
+    }
+    const now = new Date();
+    tbody.innerHTML = assignments.map(a => {
+      const due   = new Date(a.due_date);
+      const late  = due < now;
+      const badge = late ? 'badge-late' : 'badge-open';
+      const label = late ? 'Overdue' : 'Open';
+      return `<tr>
+        <td><strong>${esc(a.title)}</strong></td>
+        <td>${esc(a.subject)}</td>
+        <td>${a.due_date}</td>
+        <td>${a.max_marks}</td>
+        <td><span class="badge ${badge}">${label}</span></td>
+        <td>
+          <button class="btn btn-danger btn-sm" onclick="deleteAssignment('${a.assignment_id}')">Delete</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  async function createAssignment() {
+    const title   = document.getElementById('a-title').value.trim();
+    const subject = document.getElementById('a-subject').value.trim();
+    const due     = document.getElementById('a-due').value;
+    const marks   = document.getElementById('a-marks').value;
+    const desc    = document.getElementById('a-desc').value.trim();
+
+    if (!title || !subject || !due || !marks) { toast('Please fill all required fields.', 'var(--warn)'); return; }
+
+    try {
+      await api('/assignments', 'POST', { title, subject, due_date: due, max_marks: parseInt(marks), description: desc });
+      toast('Assignment created successfully!');
+      ['a-title','a-subject','a-due','a-marks','a-desc'].forEach(id => document.getElementById(id).value = '');
+      await loadAssignments();
+    } catch(e) { toast('Error: ' + e.message, 'var(--danger)'); }
+  }
+
+  async function deleteAssignment(id) {
+    if (!confirm('Delete this assignment? All its submissions will also be removed.')) return;
+    try {
+      await api('/assignments/' + id, 'DELETE');
+      toast('Assignment deleted.');
+      await loadAssignments();
+    } catch(e) { toast('Error: ' + e.message, 'var(--danger)'); }
+  }
+
+  // ── STATS ──
+  function updateStats() {
+    const now = new Date();
+    const open = assignments.filter(a => new Date(a.due_date) >= now).length;
+    const late = assignments.filter(a => new Date(a.due_date) < now).length;
+    const submitted = submissions.filter(s => s.status !== 'open').length;
+    document.getElementById('stat-total').textContent     = assignments.length;
+    document.getElementById('stat-open').textContent      = open;
+    document.getElementById('stat-submitted').textContent = submitted;
+    document.getElementById('stat-late').textContent      = late;
+  }
+
+  // ── SUBMISSIONS ──
+  function populateAssignmentDropdown() {
+    const sel = document.getElementById('s-assignment');
+    sel.innerHTML = '<option value="">-- Choose an assignment --</option>' +
+      assignments.map(a => `<option value="${a.assignment_id}">${esc(a.title)} (${a.subject})</option>`).join('');
+  }
+
+  async function loadSubmissions() {
+    try {
+      submissions = await api('/submissions');
+      renderSubmissions();
+      updateStats();
+    } catch(e) { toast('Could not load submissions: ' + e.message, 'var(--danger)'); }
+  }
+
+  function renderSubmissions() {
+    const tbody = document.getElementById('submissions-table');
+    if (!submissions.length) {
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty"><div class="empty-icon">📭</div><p>No submissions yet.</p></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = submissions.map(s => {
+      const asgn  = assignments.find(a => a.assignment_id === s.assignment_id);
+      const title = asgn ? esc(asgn.title) : s.assignment_id;
+      const badge = s.status === 'graded' ? 'badge-graded' : 'badge-submitted';
+      const marks = s.marks_awarded != null ? `${s.marks_awarded} / ${asgn?.max_marks || '?'}` : '—';
+      return `<tr>
+        <td>${esc(s.student_name)}</td>
+        <td><code style="font-size:0.78rem;color:var(--muted)">${esc(s.student_id)}</code></td>
+        <td>${title}</td>
+        <td style="color:var(--muted);font-size:0.8rem">${new Date(s.submitted_at).toLocaleString()}</td>
+        <td><span class="badge ${badge}">${s.status}</span></td>
+        <td>${marks}</td>
+        <td>
+          ${s.status !== 'graded'
+            ? `<button class="btn btn-primary btn-sm" onclick="openGradeModal('${s.submission_id}')">Grade</button>`
+            : `<span style="color:var(--success);font-size:0.8rem">✔ Graded</span>`}
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  async function submitAssignment() {
+    const name   = document.getElementById('s-name').value.trim();
+    const sid    = document.getElementById('s-id').value.trim();
+    const asgn   = document.getElementById('s-assignment').value;
+    const notes  = document.getElementById('s-notes').value.trim();
+
+    if (!name || !sid || !asgn) { toast('Please fill all required fields.', 'var(--warn)'); return; }
+
+    try {
+      await api('/submissions', 'POST', {
+        student_name: name, student_id: sid,
+        assignment_id: asgn, notes,
+        submitted_at: new Date().toISOString(), status: 'submitted'
+      });
+      toast('Submission recorded successfully!');
+      ['s-name','s-id','s-notes'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('s-assignment').value = '';
+      await loadSubmissions();
+    } catch(e) { toast('Error: ' + e.message, 'var(--danger)'); }
+  }
+
+  // ── GRADING ──
+  function openGradeModal(subId) {
+    gradingSubId = subId;
+    document.getElementById('grade-marks').value = '';
+    document.getElementById('grade-feedback').value = '';
+    document.getElementById('grade-modal').classList.add('open');
+  }
+  function closeGradeModal() {
+    document.getElementById('grade-modal').classList.remove('open');
+    gradingSubId = null;
+  }
+  async function saveGrade() {
+    const marks    = document.getElementById('grade-marks').value;
+    const feedback = document.getElementById('grade-feedback').value.trim();
+    if (!marks) { toast('Enter marks to award.', 'var(--warn)'); return; }
+    try {
+      await api('/submissions/' + gradingSubId + '/grade', 'PUT', {
+        marks_awarded: parseInt(marks), feedback, status: 'graded'
+      });
+      toast('Grade saved!');
+      closeGradeModal();
+      await loadSubmissions();
+    } catch(e) { toast('Error: ' + e.message, 'var(--danger)'); }
+  }
+
+  // ── UTIL ──
+  function esc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ── INIT ──
+  loadAssignments();
+  loadSubmissions();
+</script>
+</body>
+</html>
